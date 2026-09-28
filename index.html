@@ -1,490 +1,154 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="utf-8">
-    <title>WELDSABER - Galactic Pro SMAW</title>
-    <!-- Cargamos A-Frame (Versión estable) -->
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    
-    <script>
-      // BASE DE DATOS TÉCNICA (26 Preguntas)
-      const DESAFIOS = [
-        { q: "SMAW", a: "111", bad: "141" },
-        { q: "E6013", a: "Rutilo", bad: "Básico" },
-        { q: "Junta a tope", a: "G", bad: "F" },
-        { q: "Junta en ángulo", a: "F", bad: "G" },
-        { q: "E7016", a: "Básico", bad: "Rutilo" },
-        { q: "Hidrógeno", a: "Grietas", bad: "Poros" },
-        { q: "Acero", a: "< 1,7% C", bad: "1,7% C - 6,7% C" },
-        { q: "Fundición", a: "1,7% C - 6,7% C", bad: "< 1,7% C" },
-        { q: "Acero (Composición)", a: "Fe + C", bad: "Fe + O" },
-        { q: "SMAW (Proceso)", a: "Manual", bad: "Automático" },
-        { q: "SAN", a: "Atmósfera Natural", bad: "Atmósfera Protegida" },
-        { q: "Polaridad Directa", a: "DC-", bad: "DC+" },
-        { q: "Polaridad Inversa", a: "DC+", bad: "DC-" },
-        { q: "Corriente Alterna", a: "AC (~)", bad: "DC (=)" },
-        { q: "Zona afectada térmicamente", a: "ZAT", bad: "TAZ" },
-        { q: "Electrones", a: "-", bad: "+" },
-        { q: "Protones", a: "+", bad: "-" },
-        { q: "Tensión (V)", a: "Voltio (V)", bad: "Ohmio (Ω)" },
-        { q: "Intensidad (I)", a: "Amperio (A)", bad: "Voltio (V)" },
-        { q: "Plasma", a: "Gas ionizado", bad: "Gas inerte" },
-        { q: "Soplo magnético", a: "Desviación del arco", bad: "Porosidad" },
-        { q: "Ánodo", a: "+", bad: "-" },
-        { q: "Cátodo", a: "-", bad: "+" },
-        { q: "Curva característica SMAW", a: "Descendente", bad: "Plana" },
-        { q: "Curva característica SMAW", a: "Intensidad constante", bad: "Tensión constante" },
-        { q: "Ley de Ohm", a: "V = R x I", bad: "V = R / I" }
-      ];
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>WELDSABER | Entrenamiento SMAW</title>
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <style>html,body{margin:0;height:100%;overflow:hidden;background:#071016}</style>
+</head>
+<body>
+<a-scene id="scene" game-engine renderer="alpha:true;antialias:true;colorManagement:true" webxr="optionalFeatures: local-floor, passthrough" cursor="rayOrigin:mouse" raycaster="objects:.interactuable;far:20">
+  <a-light type="ambient" intensity="0.85"></a-light>
+  <a-light type="directional" position="2 5 3" intensity="0.9" color="#dbeafe"></a-light>
+  <a-grid position="0 0 0" rotation="-90 0 0" width="24" height="40" material="color:#4b7280;opacity:.13;transparent:true"></a-grid>
 
-      let score = 0;
-      let combo = 0;
-      let lives = 3;
-      let questionsAnswered = 0;
-      let gameActive = false;
-      let currentChallenge = null;
+  <a-entity id="rig">
+    <a-camera position="0 1.6 0"></a-camera>
+    <a-entity id="leftHand" laser-controls="hand:left" raycaster="objects:.target-item,.interactuable;far:20;showLine:false;interval:10">
+      <a-cylinder class="saber-blade" position="0 0 -0.55" rotation="90 0 0" radius=".018" height="1.1" material="color:#f1c40f;emissive:#f1c40f;emissiveIntensity:5"></a-cylinder>
+      <a-light type="point" intensity=".8" distance="3" color="#f1c40f"></a-light>
+    </a-entity>
+    <a-entity id="rightHand" laser-controls="hand:right" raycaster="objects:.target-item,.interactuable;far:20;showLine:false;interval:10">
+      <a-cylinder class="saber-blade" position="0 0 -0.55" rotation="90 0 0" radius=".018" height="1.1" material="color:#f1c40f;emissive:#f1c40f;emissiveIntensity:5"></a-cylinder>
+      <a-light type="point" intensity=".8" distance="3" color="#f1c40f"></a-light>
+    </a-entity>
+    <a-entity hand-tracking-controls="hand:left" raycaster="objects:.target-item,.interactuable;far:20;interval:10"></a-entity>
+    <a-entity hand-tracking-controls="hand:right" raycaster="objects:.target-item,.interactuable;far:20;interval:10"></a-entity>
+  </a-entity>
 
-      const BASE_DURATION = 8500; 
-      const MIN_DURATION = 2800;  
-      const SPEED_STEP = 250;     
-      let currentDuration = BASE_DURATION;
+  <a-entity id="hud" position="0 2.55 -4">
+    <a-plane width="6.8" height="3.45" color="#081217" opacity=".96"></a-plane>
+    <a-text value="WELDSABER | ENTRENAMIENTO SMAW" align="center" position="0 1.38 .05" width="6.4" color="#f1c40f" font="exo2bold"></a-text>
+    <a-text id="level-text" value="NIVEL 1 | SEGURIDAD" align="center" position="0 1.06 .05" width="5" color="#83d5e8"></a-text>
+    <a-plane position="0 .82 .05" width="5.4" height=".09" color="#263238"></a-plane>
+    <a-plane id="progress-bar" position="-2.7 .82 .07" width="0" height=".09" color="#2ecc71"></a-plane>
+    <a-text id="hint-text" value="REVISA EL EQUIPO Y CORTA LA RESPUESTA CORRECTA" align="center" position="0 .42 .05" width="6.5" color="#2ecc71" font="exo2bold"></a-text>
+    <a-text id="explanation-text" value="" align="center" position="0 .13 .05" width="5.7" color="#d8e7ea" wrap-count="58"></a-text>
+    <a-text id="lives-text" value="VIDAS: 3" align="center" position="0 -.35 .05" width="5.5"></a-text>
+    <a-text id="score-text" value="PUNTOS: 0" align="center" position="-1.75 -.75 .05" width="4.4" color="#f1c40f"></a-text>
+    <a-text id="combo-text" value="RACHA: 0" align="center" position="1.75 -.75 .05" width="4.4" color="#f1c40f"></a-text>
+    <a-entity id="start-btn" class="interactuable" position="0 -1.3 .12" geometry="primitive:plane;width:3.2;height:.65" material="color:#168a63;emissive:#168a63;emissiveIntensity:.35">
+      <a-text value="INICIAR ENTRENAMIENTO" align="center" position="0 0 .02" width="6.7" color="#fff" font="exo2bold"></a-text>
+    </a-entity>
+  </a-entity>
 
-      const FONT_ESTABLE = "dejavu";
+  <a-entity id="status" position="-3.25 2.35 -3.8">
+    <a-text id="category-text" value="BLOQUE: SEGURIDAD" width="3.5" color="#83d5e8"></a-text>
+  </a-entity>
+</a-scene>
 
-      AFRAME.registerComponent('game-engine', {
-        init: function () {
-          this.pizarra = document.querySelector('#hint-text');
-          this.scoreText = document.querySelector('#score-text');
-          this.comboText = document.querySelector('#combo-text');
-          this.livesText = document.querySelector('#lives-text');
-          this.progressBar = document.querySelector('#progress-bar-fill');
-          this.startTarget = null;
-          this.isTransitioning = false; 
+<script>
+window.addEventListener('load', () => {
+  const DESAFIOS = [
+    {q:'Protección de ojos',a:'Pantalla homologada',bad:'Gafas de sol',cat:'Seguridad',ex:'La pantalla protege frente a radiación, proyecciones y luz intensa del arco.'},
+    {q:'Antes de soldar',a:'Ventilar y revisar el equipo',bad:'Trabajar sin comprobar cables',cat:'Seguridad',ex:'La ventilación y la revisión de cables, pinza y masa reducen riesgos eléctricos y de humos.'},
+    {q:'Humo de soldadura',a:'Usar extracción localizada',bad:'Respirar cerca del arco',cat:'Seguridad',ex:'La extracción localizada evita que el humo entre en la zona de respiración.'},
+    {q:'SMAW',a:'111',bad:'141',cat:'Proceso',ex:'SMAW es la soldadura manual con electrodo revestido y corresponde al proceso 111.'},
+    {q:'SMAW (modo)',a:'Manual',bad:'Automático',cat:'Proceso',ex:'El avance del electrodo lo realiza el soldador de forma manual.'},
+    {q:'SAN',a:'Atmósfera natural',bad:'Atmósfera protegida',cat:'Proceso',ex:'En SMAW el revestimiento genera gases y escoria, pero el arco trabaja en atmósfera natural.'},
+    {q:'Polaridad directa',a:'CC−',bad:'CC+',cat:'Electricidad',ex:'En polaridad directa el electrodo queda conectado al polo negativo.'},
+    {q:'Polaridad inversa',a:'CC+',bad:'CC−',cat:'Electricidad',ex:'En polaridad inversa el electrodo queda conectado al polo positivo.'},
+    {q:'Corriente alterna',a:'CA (~)',bad:'CC (=)',cat:'Electricidad',ex:'La corriente alterna cambia de sentido periódicamente y se representa como CA o ~.'},
+    {q:'Tensión (V)',a:'Voltio (V)',bad:'Ohmio (Ω)',cat:'Electricidad',ex:'El voltio mide la tensión eléctrica; el ohmio mide la resistencia.'},
+    {q:'Intensidad (I)',a:'Amperio (A)',bad:'Voltio (V)',cat:'Electricidad',ex:'La intensidad de corriente se expresa en amperios.'},
+    {q:'E6013',a:'Rutilo',bad:'Básico',cat:'Electrodos',ex:'El E6013 es un electrodo revestido de tipo rutilo, de uso muy extendido.'},
+    {q:'E7016',a:'Básico',bad:'Rutilo',cat:'Electrodos',ex:'El E7016 pertenece a la familia de electrodos básicos y exige buen control de humedad.'},
+    {q:'Hidrógeno',a:'Grietas',bad:'Poros',cat:'Defectos',ex:'El hidrógeno difusible puede favorecer grietas, especialmente en condiciones desfavorables.'},
+    {q:'Soplo magnético',a:'Desviación del arco',bad:'Porosidad',cat:'Defectos',ex:'El soplo magnético desvía el arco por efectos del campo magnético.'},
+    {q:'Zona afectada térmicamente',a:'ZAT',bad:'TAZ',cat:'Metalurgia',ex:'La abreviatura habitual en español es ZAT: zona afectada térmicamente.'},
+    {q:'Acero',a:'Menos de 1,7 % de C',bad:'Entre 1,7 % y 6,7 % de C',cat:'Materiales',ex:'En esta clasificación didáctica, el acero contiene menos de 1,7 % de carbono.'},
+    {q:'Acero (composición)',a:'Fe + C',bad:'Fe + O',cat:'Materiales',ex:'El acero es una aleación basada principalmente en hierro y carbono.'},
+    {q:'Ley de Ohm',a:'V = R × I',bad:'V = R / I',cat:'Electricidad',ex:'La tensión se obtiene multiplicando resistencia por intensidad: V = R × I.'}
+  ];
 
-          // Vectores para cálculos seguros
-          this.targetPos = new THREE.Vector3();
-          this.saberPos = new THREE.Vector3();
-          this.tipPos = new THREE.Vector3();
+  let score=0, combo=0, lives=3, answered=0, active=false, current=null, duration=8200, timer=null, locked=false;
+  const $ = id => document.querySelector(id);
+  const scene = $('a-scene'), start = $('#start-btn'), startLabel = start.querySelector('a-text');
+  const blades = document.querySelectorAll('.saber-blade');
 
-          this.createStartTarget();
-
-          // BUCLE SEGURO DE COLISIONES (Evita que el navegador se congele)
-          setInterval(() => {
-              try {
-                  this.checkCollisionsSafely();
-              } catch (e) {
-                  // Si hay un error matemático temporal, lo ignoramos y no se congela
-              }
-          }, 60); // 60ms es lo bastante rápido y muy seguro para la CPU
-        },
-
-        checkCollisionsSafely: function () {
-            if (this.isTransitioning) return;
-
-            const sabers = [
-                document.getElementById('leftHand'),
-                document.getElementById('rightHand')
-            ];
-
-            // 1. Choque con botón de inicio
-            if (!gameActive && this.startTarget && this.startTarget.object3D) {
-                this.startTarget.object3D.getWorldPosition(this.targetPos);
-                
-                for (let saber of sabers) {
-                    if (!saber || !saber.object3D) continue;
-                    saber.object3D.getWorldPosition(this.saberPos);
-                    
-                    const tip = saber.querySelector('.saber-tip');
-                    if (tip && tip.object3D) tip.object3D.getWorldPosition(this.tipPos);
-                    else this.tipPos.copy(this.saberPos);
-
-                    // Distancia simple y segura a la base o a la punta de la espada
-                    if (this.targetPos.distanceTo(this.saberPos) < 0.6 || this.targetPos.distanceTo(this.tipPos) < 0.6) {
-                        this.startGame();
-                        return;
-                    }
-                }
-            }
-
-            // 2. Choques con los discos
-            if (gameActive) {
-                const targets = document.querySelectorAll('.target-item');
-                targets.forEach(target => {
-                    if (target.dataset.hit === "true" || !target.object3D) return;
-                    
-                    target.object3D.getWorldPosition(this.targetPos);
-
-                    for (let saber of sabers) {
-                        if (!saber || !saber.object3D) continue;
-                        saber.object3D.getWorldPosition(this.saberPos);
-                        
-                        const tip = saber.querySelector('.saber-tip');
-                        if (tip && tip.object3D) tip.object3D.getWorldPosition(this.tipPos);
-                        else this.tipPos.copy(this.saberPos);
-
-                        if (this.targetPos.distanceTo(this.saberPos) < 0.5 || this.targetPos.distanceTo(this.tipPos) < 0.5) {
-                            target.dataset.hit = "true";
-                            this.handleHit(target, this.targetPos.clone());
-                            break;
-                        }
-                    }
-                });
-            }
-        },
-
-        createStartTarget: function() {
-            if (this.startTarget) return;
-            const target = document.createElement('a-entity');
-            target.setAttribute('class', 'start-target interactuable'); 
-            target.setAttribute('position', '0 1.3 -1.5'); 
-            
-            target.setAttribute('animation', {
-                property: 'position', to: '0 1.4 -1.5',
-                dir: 'alternate', loop: true, dur: 2000, easing: 'easeInOutSine'
-            });
-            
-            const body = document.createElement('a-cylinder');
-            body.setAttribute('rotation', '90 0 0');
-            body.setAttribute('radius', '0.36');
-            body.setAttribute('height', '0.032');
-            body.setAttribute('material', 'color: #111111; metalness: 0.9; roughness: 0.1; emissive: #27ae60; emissiveIntensity: 0.3');
-            
-            const text = document.createElement('a-text');
-            text.setAttribute('value', 'CORTAR\nINICIAR');
-            text.setAttribute('align', 'center');
-            text.setAttribute('width', '4');
-            text.setAttribute('position', '0 0 0.025');
-            text.setAttribute('color', '#2ecc71');
-            text.setAttribute('font', FONT_ESTABLE);
-            text.setAttribute('material', 'shader: flat; emissive: #2ecc71; emissiveIntensity: 0.6');
-
-            target.appendChild(body);
-            target.appendChild(text);
-            this.el.appendChild(target);
-            this.startTarget = target;
-        },
-
-        startGame: function() {
-          if (gameActive) return;
-          gameActive = true;
-          this.isTransitioning = true; 
-          
-          if (this.startTarget && this.startTarget.object3D) {
-              const pos = new THREE.Vector3();
-              this.startTarget.object3D.getWorldPosition(pos);
-              this.sliceEffect(pos);
-              this.createSparks(pos);
-              if (this.startTarget.parentNode) this.startTarget.parentNode.removeChild(this.startTarget);
-              this.startTarget = null;
-          }
-
-          score = 0;
-          combo = 0;
-          lives = 3;
-          questionsAnswered = 0;
-          currentDuration = BASE_DURATION;
-          this.updateUI();
-          this.setSaberColor('#f1c40f', 5);
-          
-          setTimeout(() => {
-              this.isTransitioning = false;
-              this.nextChallenge();
-          }, 1000);
-        },
-
-        nextChallenge: function() {
-          if (!gameActive) return;
-          
-          let next;
-          do {
-            next = DESAFIOS[Math.floor(Math.random() * DESAFIOS.length)];
-          } while (next === currentChallenge && DESAFIOS.length > 1);
-          
-          currentChallenge = next;
-          this.pizarra.setAttribute('value', currentChallenge.q);
-          this.pizarra.setAttribute('color', '#2ecc71');
-          this.spawnTargets();
-        },
-
-        spawnTargets: function() {
-          const isCorrectLeft = Math.random() > 0.5;
-          this.createTarget(currentChallenge.a, isCorrectLeft ? -1.04 : 1.04, true);
-          this.createTarget(currentChallenge.bad, isCorrectLeft ? 1.04 : -1.04, false);
-        },
-
-        createTarget: function(label, xPos, isCorrect) {
-          const target = document.createElement('a-entity');
-          target.setAttribute('class', 'target-item interactuable'); 
-          target.setAttribute('position', `${xPos} 1.3 -22`);
-          target.dataset.correct = isCorrect;
-          
-          const body = document.createElement('a-cylinder');
-          body.setAttribute('rotation', '90 0 0');
-          body.setAttribute('radius', '0.36'); 
-          body.setAttribute('height', '0.032'); 
-          body.setAttribute('material', 'color: #111111; metalness: 0.9; roughness: 0.1; emissive: #f1c40f; emissiveIntensity: 0.05');
-          
-          const text = document.createElement('a-text');
-          text.setAttribute('value', label);
-          text.setAttribute('align', 'center');
-          text.setAttribute('width', '4.4'); 
-          text.setAttribute('position', '0 0 0.025');
-          text.setAttribute('color', '#f1c40f');
-          text.setAttribute('font', FONT_ESTABLE);
-          text.setAttribute('material', 'shader: flat; emissive: #f1c40f; emissiveIntensity: 0.6');
-
-          target.appendChild(body);
-          target.appendChild(text);
-
-          target.setAttribute('animation', {
-            property: 'position', to: `${xPos} 1.3 5`,
-            dur: currentDuration, easing: 'linear'
-          });
-
-          this.el.appendChild(target);
-
-          setTimeout(() => {
-            if (target.parentNode && target.dataset.hit !== "true") {
-              if (isCorrect && gameActive && !this.isTransitioning && this.pizarra.getAttribute('value') === currentChallenge.q) {
-                this.handleMiss();
-              }
-              if (target.parentNode) target.parentNode.removeChild(target);
-            }
-          }, currentDuration + 100);
-        },
-
-        handleHit: function(targetEl, hitPoint) {
-          if (this.isTransitioning) return; 
-          this.isTransitioning = true;
-          
-          const isCorrect = targetEl.dataset.correct === "true";
-          const pos = hitPoint || new THREE.Vector3(0, 1.3, -2);
-          
-          this.createSparks(pos);
-
-          if (isCorrect) {
-            score += 10 + (combo * 2);
-            combo++;
-            questionsAnswered++;
-            this.checkEvents();
-            this.increaseSpeed();
-            this.pizarra.setAttribute('value', '¡CORRECTO!');
-            this.pizarra.setAttribute('color', '#2ecc71');
-            this.sliceEffect(pos);
-            
-            this.cleanupTargets(); 
-            
-            if (questionsAnswered >= DESAFIOS.length) {
-                this.victory();
-            } else {
-                setTimeout(() => {
-                    this.isTransitioning = false;
-                    this.nextChallenge();
-                }, 800);
-            }
-          } else {
-            lives--;
-            combo = 0;
-            this.checkEvents();
-            targetEl.setAttribute('material', 'color: #c0392b');
-            targetEl.setAttribute('animation__err', {property: 'scale', to: '0 0 0', dur: 200});
-            this.pizarra.setAttribute('value', 'ERROR DE ANÁLISIS');
-            this.pizarra.setAttribute('color', '#c0392b');
-            
-            if (lives <= 0) { 
-                this.gameOver(); 
-            } else { 
-                this.cleanupTargets(targetEl); 
-                setTimeout(() => {
-                    if (targetEl.parentNode) targetEl.parentNode.removeChild(targetEl);
-                    this.isTransitioning = false;
-                    this.nextChallenge();
-                }, 1500); 
-            }
-          }
-          this.updateUI();
-        },
-
-        checkEvents: function() {
-            if (questionsAnswered === 13) {
-                this.setSaberColor('#ff00ff', 10);
-                currentDuration = Math.max(MIN_DURATION, currentDuration - 1200);
-                this.pizarra.setAttribute('value', '¡MODO OVERDRIVE!');
-            } else if (combo >= 5 && questionsAnswered < 13) {
-                this.setSaberColor('#00ffff', 8);
-            } else if (combo < 5 && questionsAnswered < 13) {
-                this.setSaberColor('#f1c40f', 5);
-            }
-        },
-
-        handleMiss: function() {
-            if (this.isTransitioning) return;
-            this.isTransitioning = true;
-
-            lives--;
-            combo = 0;
-            this.checkEvents();
-            this.pizarra.setAttribute('value', '¡FUERA DE TIEMPO!');
-            this.pizarra.setAttribute('color', '#c0392b');
-            this.updateUI();
-
-            if (lives <= 0) { 
-                this.gameOver(); 
-            } else { 
-                this.cleanupTargets();
-                setTimeout(() => {
-                    this.isTransitioning = false;
-                    this.nextChallenge();
-                }, 1500); 
-            }
-        },
-
-        victory: function() {
-            gameActive = false;
-            this.isTransitioning = false;
-            this.cleanupTargets();
-            this.pizarra.setAttribute('value', '¡MISIÓN CUMPLIDA - MAESTRO SMAW!');
-            this.pizarra.setAttribute('color', '#2ecc71');
-            setTimeout(() => this.createStartTarget(), 2000);
-        },
-
-        gameOver: function() {
-            gameActive = false;
-            this.isTransitioning = false;
-            this.cleanupTargets();
-            this.pizarra.setAttribute('value', 'FALLO CRÍTICO - SISTEMA COLAPSADO');
-            this.pizarra.setAttribute('color', '#ff0000');
-            setTimeout(() => {
-                this.createStartTarget();
-                this.pizarra.setAttribute('value', 'CORTA EL DISCO PARA REINTENTAR');
-                this.pizarra.setAttribute('color', '#FFFFFF');
-            }, 2000);
-        },
-
-        increaseSpeed: function() {
-            currentDuration = Math.max(MIN_DURATION, currentDuration - SPEED_STEP);
-        },
-
-        setSaberColor: function(color, intensity) {
-            this.saberBlades.forEach(blade => {
-                blade.setAttribute('material', {color: color, emissive: color, emissiveIntensity: intensity});
-                const light = blade.parentNode.querySelector('a-light');
-                if (light) light.setAttribute('color', color);
-            });
-        },
-
-        updateUI: function() {
-            this.scoreText.setAttribute('value', `PUNTOS: ${score}`);
-            this.comboText.setAttribute('value', `RACHA: ${combo}`);
-            this.livesText.setAttribute('value', `VIDAS: ${lives} / 3`);
-            this.livesText.setAttribute('color', lives === 1 ? '#ff0000' : '#FFFFFF');
-            
-            const progress = questionsAnswered / DESAFIOS.length;
-            this.progressBar.setAttribute('width', progress * 5);
-            this.progressBar.setAttribute('position', `${(progress * 5 / 2) - 2.5} 0 0.01`);
-        },
-
-        createSparks: function(pos) {
-          if (!pos || pos.x === undefined) return;
-          for(let i=0; i<15; i++) {
-            const spark = document.createElement('a-sphere');
-            spark.setAttribute('radius', '0.018');
-            spark.setAttribute('position', `${pos.x} ${pos.y} ${pos.z}`);
-            const color = combo >= 5 ? '#00ffff' : (questionsAnswered >= 13 ? '#ff00ff' : '#f1c40f');
-            spark.setAttribute('material', `color: ${color}; shader: flat; emissive: ${color}; emissiveIntensity: 4`);
-            const dest = {
-              x: pos.x + (Math.random() - 0.5) * 3,
-              y: pos.y + (Math.random() - 0.5) * 3,
-              z: pos.z + (Math.random() - 0.5) * 1.5
-            };
-            spark.setAttribute('animation', { property: 'position', to: `${dest.x} ${dest.y} ${dest.z}`, dur: 550, easing: 'easeOutQuad' });
-            spark.setAttribute('animation__fade', { property: 'scale', to: '0 0 0', dur: 550 });
-            this.el.appendChild(spark);
-            setTimeout(() => { if(spark.parentNode) spark.parentNode.removeChild(spark); }, 600);
-          }
-        },
-
-        sliceEffect: function(pos) {
-          if (!pos || pos.x === undefined) return;
-          const createHalf = (side) => {
-            const half = document.createElement('a-cylinder');
-            half.setAttribute('position', `${pos.x} ${pos.y} ${pos.z}`);
-            half.setAttribute('rotation', '90 0 0');
-            half.setAttribute('radius', '0.36'); 
-            half.setAttribute('height', '0.016');
-            half.setAttribute('theta-length', '180');
-            half.setAttribute('theta-start', side === 'left' ? '0' : '180');
-            const color = questionsAnswered >= 13 ? '#ff00ff' : '#2ecc71';
-            half.setAttribute('material', `color: #111111; emissive: ${color}; emissiveIntensity: 0.5`);
-            half.setAttribute('animation', { property: 'position', to: `${pos.x + (side === 'left' ? -2.5 : 2.5)} ${pos.y - 2} ${pos.z + 1.5}`, dur: 1200, easing: 'easeInQuad' });
-            half.setAttribute('animation__rot', { property: 'rotation', to: `${Math.random()*360} ${Math.random()*360} 0`, dur: 1200 });
-            this.el.appendChild(half);
-            setTimeout(() => { if(half.parentNode) half.parentNode.removeChild(half); }, 1250);
-          };
-          createHalf('left'); createHalf('right');
-        },
-
-        cleanupTargets: function(excludeEl = null) {
-          document.querySelectorAll('.target-item').forEach(t => { 
-              if (t !== excludeEl && t.parentNode) t.parentNode.removeChild(t); 
-          });
-        }
+  AFRAME.registerComponent('game-engine', {
+    init() {
+      this.el.addEventListener('raycaster-intersection', e => {
+        (e.detail.els || []).forEach(target => {
+          if (!active || locked) return;
+          if (target.classList.contains('target-item')) {
+            const hit = e.detail.intersections && e.detail.intersections[0];
+            this.handleHit(target, hit ? hit.point : target.object3D.position);
+          } else if (!active && target.id === 'start-btn') this.startGame();
+        });
       });
-    </script>
-    <style>
-      body { margin: 0; overflow: hidden; background-color: transparent; }
-    </style>
-  </head>
-  <body>
-    <a-scene 
-      game-engine
-      renderer="alpha: false; antialias: true; colorManagement: true; highRefreshRate: true"
-      webxr="optionalFeatures: hit-test, local-floor, passthrough;"
-      background="color: #0f172a">
-      
-      <!-- Fondo oscuro de taller por defecto -->
-      <a-light type="ambient" intensity="0.7"></a-light>
-      <a-light type="directional" position="2 4 2" intensity="0.8"></a-light>
-
-      <a-grid position="0 0 0" rotation="-90 0 0" width="30" height="60" material="color: #f1c40f; opacity: 0.1; transparent: true"></a-grid>
-
-      <a-entity id="rig">
-        <a-camera position="0 1.6 0"></a-camera>
-        
-        <!-- MANDOS CON LÁSER LIMITADO: showLine:false evita que veas la línea, objects:.interactuable evita el colapso de memoria -->
-        <a-entity id="leftHand" laser-controls="hand: left" raycaster="objects: .interactuable; showLine: false;">
-            <a-cylinder class="saber-blade" position="0 0 -0.5" rotation="90 0 0" radius="0.012" height="1.0" material="color: #f1c40f; emissive: #f1c40f; emissiveIntensity: 6"></a-cylinder>
-            <a-entity class="saber-tip" position="0 0 -1.0"></a-entity>
-            <a-light type="point" color="#f1c40f" intensity="1.2" distance="3.2"></a-light>
-        </a-entity>
-        
-        <a-entity id="rightHand" laser-controls="hand: right" raycaster="objects: .interactuable; showLine: false;">
-            <a-cylinder class="saber-blade" position="0 0 -0.5" rotation="90 0 0" radius="0.012" height="1.0" material="color: #f1c40f; emissive: #f1c40f; emissiveIntensity: 6"></a-cylinder>
-            <a-entity class="saber-tip" position="0 0 -1.0"></a-entity>
-            <a-light type="point" color="#f1c40f" intensity="1.2" distance="3.2"></a-light>
-        </a-entity>
-      </a-entity>
-
-      <!-- TERMINAL DE CONTROL -->
-      <a-entity position="0 2.2 -5.0" scale="0.8 0.8 0.8">
-        <a-plane color="#000000" width="6.5" height="2.8" opacity="0.95" material="metalness: 0.5"></a-plane>
-        <a-ring color="#f1c40f" radius-inner="3.3" radius-outer="3.4" position="0 0 -0.01" opacity="0.1"></a-ring>
-        
-        <a-text value="WELDSABER :: SMAW EDITION" align="center" position="0 1.1 0.05" width="5.5" color="#f1c40f" font="dejavu"></a-text>
-        
-        <a-entity position="0 0.85 0.06">
-            <a-plane color="#333" width="5" height="0.1" position="0 0 0"></a-plane>
-            <a-plane id="progress-bar-fill" color="#2ecc71" width="0" height="0.1" position="-2.5 0 0.01" material="emissive: #2ecc71; emissiveIntensity: 0.5"></a-plane>
-        </a-entity>
-        
-        <a-text id="hint-text" value="SISTEMA LISTO PARA INICIAR" align="center" position="0 0.35 0.05" width="7" color="#2ecc71" font="dejavu"></a-text>
-        
-        <a-text id="lives-text" value="VIDAS: 3 / 3" align="center" position="0 -0.25 0.05" width="5.5" font="dejavu"></a-text>
-        
-        <a-text id="score-text" value="PUNTOS: 0" align="center" position="-1.8 -0.8 0.05" width="4.5" color="#f1c40f" font="dejavu"></a-text>
-        <a-text id="combo-text" value="RACHA: 0" align="center" position="1.8 -0.8 0.05" width="4.5" color="#f1c40f" font="dejavu"></a-text>
-      </a-entity>
-
-    </a-scene>
-  </body>
+      start.addEventListener('click', () => { if (!active) this.startGame(); });
+      this.showIntro();
+    },
+    showIntro() {
+      $('#hint-text').setAttribute('value','REVISA EL EQUIPO Y CORTA LA RESPUESTA CORRECTA');
+      $('#explanation-text').setAttribute('value','19 retos | 3 bloques | evaluación final');
+      $('#category-text').setAttribute('value','BLOQUE: SEGURIDAD');
+      start.setAttribute('visible','true'); start.setAttribute('scale','1 1 1');
+      startLabel.setAttribute('value','INICIAR ENTRENAMIENTO');
+    },
+    startGame() {
+      active=true; locked=false; score=0; combo=0; lives=3; answered=0; duration=8200;
+      this.clearTargets(); this.setBlades('#f1c40f',5); this.updateUI();
+      start.setAttribute('visible','false'); start.setAttribute('scale','0 0 0');
+      this.nextChallenge();
+    },
+    nextChallenge() {
+      if (!active) return;
+      locked=false; clearTimeout(timer);
+      let next; do next=DESAFIOS[Math.floor(Math.random()*DESAFIOS.length)]; while(next===current && DESAFIOS.length>1);
+      current=next;
+      const level=answered<6?'1':answered<13?'2':'3';
+      $('#level-text').setAttribute('value',`NIVEL ${level} | ${current.cat.toUpperCase()}`);
+      $('#category-text').setAttribute('value',`BLOQUE: ${current.cat.toUpperCase()}`);
+      $('#hint-text').setAttribute('value',current.q); $('#hint-text').setAttribute('color','#2ecc71');
+      $('#explanation-text').setAttribute('value',''); this.spawnTargets();
+    },
+    spawnTargets() {
+      const left=Math.random()>.5;
+      this.createTarget(current.a,left?-1.25:1.25,true);
+      this.createTarget(current.bad,left?1.25:-1.25,false);
+    },
+    createTarget(label,x,correct) {
+      const target=document.createElement('a-entity'); target.classList.add('target-item'); target.dataset.correct=correct?'true':'false';
+      target.setAttribute('position',`${x} 1.35 -18`); target.setAttribute('geometry','primitive:circle;radius:.52');
+      target.setAttribute('material','color:#111923;metalness:.75;roughness:.2;emissive:#f1c40f;emissiveIntensity:.12');
+      const text=document.createElement('a-text'); text.setAttribute('value',label); text.setAttribute('align','center'); text.setAttribute('position','0 0 .025'); text.setAttribute('width','5.2'); text.setAttribute('color','#f7d774'); text.setAttribute('font','exo2bold'); text.setAttribute('wrap-count','20');
+      target.appendChild(text); scene.appendChild(target);
+      target.setAttribute('animation__move',{property:'position',to:`${x} 1.35 -.75`,dur:duration,easing:'linear'});
+      setTimeout(()=>{ if(target.parentNode) target.parentNode.removeChild(target); if(correct && active && !locked) this.miss(); },duration+80);
+    },
+    handleHit(target,point) {
+      if(locked || !target.parentNode) return; locked=true;
+      const correct=target.dataset.correct==='true'; this.sparks(point);
+      if(correct){ score+=10+combo*2; combo++; answered++; this.explain(true); this.slice(target); this.increaseSpeed(); this.updateUI();
+        if(answered>=DESAFIOS.length) setTimeout(()=>this.victory(),950); else setTimeout(()=>this.nextChallenge(),950);
+      } else { this.explain(false); lives--; combo=0; this.updateUI(); if(lives<=0) setTimeout(()=>this.gameOver(),850); else setTimeout(()=>this.nextChallenge(),1450); }
+    },
+    miss(){ if(locked || !active) return; locked=true; lives--; combo=0; $('#hint-text').setAttribute('value','FUERA DE TIEMPO'); $('#hint-text').setAttribute('color','#e74c3c'); $('#explanation-text').setAttribute('value',current.ex); this.updateUI(); if(lives<=0)setTimeout(()=>this.gameOver(),900); else setTimeout(()=>this.nextChallenge(),1450); },
+    explain(ok){ $('#hint-text').setAttribute('value',ok?'CORRECTO':'RESPUESTA INCORRECTA'); $('#hint-text').setAttribute('color',ok?'#2ecc71':'#e74c3c'); $('#explanation-text').setAttribute('value',current.ex); },
+    increaseSpeed(){ duration=Math.max(3300,duration-220); },
+    updateUI(){ $('#score-text').setAttribute('value',`PUNTOS: ${score}`); $('#combo-text').setAttribute('value',`RACHA: ${combo}`); $('#lives-text').setAttribute('value',`VIDAS: ${'♥'.repeat(Math.max(0,lives))}`); $('#lives-text').setAttribute('color',lives===1?'#e74c3c':'#fff'); const p=answered/DESAFIOS.length; $('#progress-bar').setAttribute('width',5.4*p); $('#progress-bar').setAttribute('position',`${-2.7+2.7*p} .82 .07`); },
+    clearTargets(){ document.querySelectorAll('.target-item').forEach(t=>t.remove()); },
+    setBlades(color,intensity){ blades.forEach(b=>b.setAttribute('material',{color,emissive:color,emissiveIntensity:intensity})); document.querySelectorAll('a-light[type="point"]').forEach(l=>l.setAttribute('color',color)); },
+    sparks(pos){ for(let i=0;i<10;i++){const s=document.createElement('a-sphere'); s.setAttribute('radius','.018'); s.setAttribute('position',`${pos.x} ${pos.y} ${pos.z}`); s.setAttribute('material','color:#f1c40f;shader:flat;emissive:#f1c40f;emissiveIntensity:4'); s.setAttribute('animation__move',{property:'position',to:`${pos.x+(Math.random()-.5)*2} ${pos.y+Math.random()*1.5} ${pos.z+(Math.random()-.5)}`,dur:450}); s.setAttribute('animation__fade',{property:'scale',to:'0 0 0',dur:450}); scene.appendChild(s); setTimeout(()=>s.remove(),500); } },
+    slice(target){ target.remove(); this.clearTargets(); },
+    finish(title,color){ active=false; locked=true; clearTimeout(timer); this.clearTargets(); $('#hint-text').setAttribute('value',title); $('#hint-text').setAttribute('color',color); $('#explanation-text').setAttribute('value',`Resultado: ${score} puntos | ${answered}/${DESAFIOS.length} aciertos | ${Math.round(answered/DESAFIOS.length*100)} %`); start.setAttribute('visible','true'); start.setAttribute('scale','1 1 1'); startLabel.setAttribute('value','REPETIR ENTRENAMIENTO'); },
+    victory(){ this.setBlades('#2ecc71',7); this.finish('ENTRENAMIENTO SUPERADO','#2ecc71'); },
+    gameOver(){ this.setBlades('#e74c3c',5); this.finish('ENTRENAMIENTO NO SUPERADO','#e74c3c'); }
+  });
+});
+</script>
+</body>
 </html>
